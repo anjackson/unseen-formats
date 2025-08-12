@@ -11,6 +11,12 @@ source .venv/bin/activate
 pip install -e .
 ```
 
+Editing notebooks via:
+
+```bash
+jupyter-lab --no-browser
+```
+
 
 ## pydistinct
 

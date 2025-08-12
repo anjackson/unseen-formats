@@ -7,6 +7,8 @@ name = "unseen-formats"
 version = "2025.0.0"
 dependencies = [
   "jupyterlab",
+  "jupyterlab_myst",
+  "jupytext",
   "manim",
   "matplotlib",
   "matplotlib-venn",
