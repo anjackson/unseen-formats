@@ -6,7 +6,11 @@ build-backend = "hatchling.build"
 name = "unseen-formats"
 version = "2025.0.0"
 dependencies = [
+  "jupyterlab",
   "manim",
-  "matplotlib"
+  "matplotlib",
+  "matplotlib-venn",
+  "mystmd",
+  "upsetplot"
 ]
 requires-python = ">=3.11"
