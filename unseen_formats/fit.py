@@ -69,6 +69,10 @@ def generate_fit_plot(x_data, y_data, labels, x_fit, y_fit, a_opt, b_opt, y_lowe
   for i in range(len(x_data)):
     ax.scatter(x_data[i], y_data[i], label=labels[i], s=30)
 
+  # Set the limits
+  ax.set_xlim([0, 50000])
+  ax.set_ylim([0, 14000])
+
   # Plot the fitted curve
   plt.plot(x_fit, y_fit, 'r-', label=f'Fit: y = {a_opt:.2f}ln(x) + {b_opt:.2f}')
 

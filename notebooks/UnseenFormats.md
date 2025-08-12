@@ -38,7 +38,30 @@ Because we are reducing all the registry data down to file extensions, the assum
 To understand how distinct the holdings of each registry are, we can plot the percentage of unique entries versus the total number of entries.  If all registries were truly random samples of the totality of data formats, we would expect a broadly linear trend. In other words, we would expect larger registries to contain a larger percentage of unique entries.
 
 ```{code-cell} ipython3
+df
+```
 
+```{code-cell} ipython3
+%matplotlib inline
+import matplotlib_inline
+matplotlib_inline.backend_inline.set_matplotlib_formats('svg')
+
+from unseen_formats.species import load_extensions, compute_sac
+import pandas as pd
+import matplotlib.pyplot as plt
+
+ext_sets = load_extensions('../data/extensions-new-2025-08-12.json')
+results = compute_sac(ext_sets)
+
+df = pd.DataFrame(results)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+for i in range(len(df['source'])):
+    ax.scatter(df['num_exts'][i], df['num_uniq_exts'][i], label=df['source'][i], s=30)
+
+plt.legend(fontsize=9)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.show()
 ```
 
 This plot shows that different registries have their own character. For example, as one might expect the GitHub Linguist set has a large number of distinct entries, especially given it's relatively small size. This is likely because it specialises in looking at source code files and related formats likely to be found in GitHub repositories.
@@ -51,11 +74,32 @@ It is notable that the `fdd` and `pronom` have relatively low percentages of uni
 The results of the final species accumulation curve are shown below.
 
 ```{code-cell} ipython3
+from unseen_formats.fit import generate_fit
 
-```
+x_fit, y_fit, a_opt, b_opt, y_lower, y_upper = generate_fit(df['total_exts'], df['total_uniq_exts'], 2000, 50000)
 
-```{code-cell} ipython3
 
+# Plot the original data
+fig, ax = plt.subplots(figsize=(10, 6))
+for i in range(len(df['source'])):
+    ax.scatter(df['total_exts'][i], df['total_uniq_exts'][i], label=df['source'][i], s=30)
+
+# Plot the fitted curve
+plt.plot(x_fit, y_fit, 'r-', label=f'Fit: y = {a_opt:.2f}ln(x) + {b_opt:.2f}')
+
+# Plot the 95% confidence interval
+plt.fill_between(x_fit, y_lower, y_upper, color='red', alpha=0.2, label='95% Confidence Interval')
+
+# Set the limits
+ax.set_xlim([0, 50000])
+ax.set_ylim([0, 14000])
+
+# Final plot styling
+plt.xlabel('Total File Extensions', fontsize=10)
+plt.ylabel('Total Unique File Extensions', fontsize=10)
+plt.legend(fontsize=9, loc='lower right')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.show()
 ```
 
 This indicates that a conservative lower-bound on the total number of formats we might expect to come across is around 12,000, but given the variation between the data points and the fitted curve, this is only an approximate answer.

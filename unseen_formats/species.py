@@ -13,18 +13,31 @@ logging.basicConfig(level=logging.WARNING, format='%(asctime)s: %(levelname)s - 
 logger = logging.getLogger(__name__)
 
 
-def load_extensions(input_file):
+def load_extensions_yaml(input_file):
     with open(input_file) as f:
         extensions = yaml.safe_load(f)
     return extensions
 
-def reindex_by_registry(extensions):
+def reindex_yaml_by_registry(extensions):
     exts = extensions['extensions']
     ext_sets = defaultdict(set)
     for ext in exts:
         for id in exts[ext]['identifiers']:
             ext_sets[id['regId']].add(ext.lower())
     return ext_sets
+
+def load_extensions(input_file):
+    if input_file.endswith('yml') or input_file.endswith('yaml'):
+        extensions = load_extensions_yaml(input_file)
+        return reindex_yaml_by_registry(extensions)
+    else:
+        with open(input_file) as f:
+            ext_sets = json.load(f)
+            # Convert to a Dict of Sets:
+            for source, ext_list in ext_sets.items():
+                ext_sets[source] = set(ext_list)
+
+            return ext_sets
 
 def compute_sac(ext_sets):
 
@@ -60,10 +73,11 @@ def compute_sac(ext_sets):
 
     return results
 
-def write_sac(input_file, output_csv):
-    ext_sets = reindex_by_registry(load_extensions(input_file))
+def write_sac(input_file):
+    ext_sets = load_extensions(input_file)
     results = compute_sac(ext_sets)
     # Write out as CSV:
+    output_csv = Path(input_file).with_suffix('.species.csv') 
     with open(output_csv, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=results[0].keys())
         writer.writeheader()
@@ -113,7 +127,7 @@ def compare_csv(input_file, csv_file):
             collection_counts[ext] = int(row['file_count'])
             collection_total += int(row['file_count'])
     
-    ext_sets = reindex_by_registry(load_extensions(input_file))
+    ext_sets = load_extensions(input_file)
     all_extensions = set()
     for set_key, ext_set in sorted(ext_sets.items(), key=lambda item: len(item[1]), reverse=True):
         all_extensions |= ext_set
@@ -121,7 +135,7 @@ def compare_csv(input_file, csv_file):
     _print_comparison("_ALL_", all_extensions, collection_set, collection_counts, collection_total)
 
 def write_extensions(input_file, output_json):
-    ext_sets = reindex_by_registry(load_extensions(input_file))
+    ext_sets = load_extensions(input_file)
     with open(output_json,"w") as f:
         json.dump(ext_sets, f, default=list)
 
@@ -135,7 +149,6 @@ if __name__ == "__main__":
     subparsers =  parser.add_subparsers(dest="action", help='action')
 
     parser_sac = subparsers.add_parser('curve', parents=[common_args], help="Load the extensions and compute the Species Accumulation Curve.")
-    parser_sac.add_argument('csv_file', type=str, help='CSV file to write to')
 
     parser_cmp = subparsers.add_parser('compare', parents=[common_args], help="Compare extensions from a CSV file with the registry contents.")
     parser_cmp.add_argument('csv_file', type=str, help='CSV file to load')
@@ -153,7 +166,7 @@ if __name__ == "__main__":
             logging.getLogger().setLevel(logging.DEBUG)
 
     if args.action == 'curve':
-        write_sac(args.input_file, args.csv_file)
+        write_sac(args.input_file)
     elif args.action == 'compare':
         compare_csv(args.input_file, args.csv_file)
     elif args.action == "extensions":
