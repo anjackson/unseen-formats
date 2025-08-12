@@ -5,14 +5,16 @@ import json
 import logging
 import argparse
 from collections import defaultdict
+from pathlib import Path
+from .fit import generate_fit, generate_fit_plot
 
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s: %(levelname)s - %(name)s - %(message)s')
 
 logger = logging.getLogger(__name__)
 
 
-def load_extensions():
-    with open('digipres.github.io/_data/formats/extensions.yml') as f:
+def load_extensions(input_file):
+    with open(input_file) as f:
         extensions = yaml.safe_load(f)
     return extensions
 
@@ -24,15 +26,14 @@ def reindex_by_registry(extensions):
             ext_sets[id['regId']].add(ext.lower())
     return ext_sets
 
-def compute_sac():
-    ext_sets = reindex_by_registry(load_extensions())
+def compute_sac(ext_sets):
 
     all_extensions = set()
     sample_total = 0
+    results = []
 
     # Go though the dict of sets, sorting them so largest sets go first (note each item is the k,v array):
     # Doing this seems to make the curve fitting more robust/consistent.
-    print("source,num_exts,num_uniq_exts,percent_uniq_exts,total_exts,total_uniq_exts,added_uniq_exts")
     for set_key, ext_set in sorted(ext_sets.items(), key=lambda item: len(item[1]), reverse=True):
         sample_total += len(ext_set)
         current_total = len(all_extensions)
@@ -46,7 +47,39 @@ def compute_sac():
         # Share & Enjoy:
         set_size = len(ext_set)
         unique_size = len(unique_ext)
-        print(f"{set_key},{set_size},{unique_size},{100.0*unique_size/set_size:.3f},{sample_total},{len(all_extensions)},{total_added}")
+        result = {
+            "source": set_key,
+            "num_exts": set_size,
+            "num_uniq_exts": unique_size,
+            "percent_uniq_exts": 100.0*unique_size/set_size,
+            "total_exts": sample_total,
+            "total_uniq_exts": len(all_extensions),
+            "added_uniq_exts": total_added
+        }
+        results.append(result)
+
+    return results
+
+def write_sac(input_file, output_csv):
+    ext_sets = reindex_by_registry(load_extensions(input_file))
+    results = compute_sac(ext_sets)
+    # Write out as CSV:
+    with open(output_csv, 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=results[0].keys())
+        writer.writeheader()
+        for item in results:
+            writer.writerow(item)
+    # Also run the fit
+    x_data = []
+    y_data = []
+    labels = []
+    for item in results:
+        labels.append(item['source'])
+        x_data.append(item['total_exts'])
+        y_data.append(item['total_uniq_exts'])
+    x_fit, y_fit, a_opt, b_opt, y_lower, y_upper = generate_fit(x_data, y_data, min_x=2000, max_x=50000)
+    prefix = Path(output_csv).with_suffix('')
+    generate_fit_plot(x_data, y_data, labels, x_fit, y_fit, a_opt, b_opt, y_lower, y_upper, prefix)
 
 
 def _print_comparison(set_key, candidate_set, collection_set, collection_counts, collection_total):
@@ -57,7 +90,7 @@ def _print_comparison(set_key, candidate_set, collection_set, collection_counts,
         remainder_count += collection_counts[ext]
     print(f"{set_key} {len(common)} {len(remainder)} {remainder_count} {collection_total}")# {json.dumps(list(remainder))}")
 
-def compare_csv(csv_file):
+def compare_csv(input_file, csv_file):
     collection_set = set()
     collection_counts = {}
     collection_total = 0
@@ -80,15 +113,15 @@ def compare_csv(csv_file):
             collection_counts[ext] = int(row['file_count'])
             collection_total += int(row['file_count'])
     
-    ext_sets = reindex_by_registry(load_extensions())
+    ext_sets = reindex_by_registry(load_extensions(input_file))
     all_extensions = set()
     for set_key, ext_set in sorted(ext_sets.items(), key=lambda item: len(item[1]), reverse=True):
         all_extensions |= ext_set
         _print_comparison(set_key, ext_set, collection_set, collection_counts, collection_total)
     _print_comparison("_ALL_", all_extensions, collection_set, collection_counts, collection_total)
 
-def write_extensions(output_json):
-    ext_sets = reindex_by_registry(load_extensions())
+def write_extensions(input_file, output_json):
+    ext_sets = reindex_by_registry(load_extensions(input_file))
     with open(output_json,"w") as f:
         json.dump(ext_sets, f, default=list)
 
@@ -96,11 +129,13 @@ def write_extensions(output_json):
 if __name__ == "__main__":
     common_args = argparse.ArgumentParser(prog="species", add_help=False)
     common_args.add_argument('-v', '--verbose',  action='count', default=0, help='Logging level; add more -v for more logging.')
+    common_args.add_argument('input_file', type=str, help='Input extensions.yml file to load in.')
 
     parser = argparse.ArgumentParser(prog="species", add_help=True)
     subparsers =  parser.add_subparsers(dest="action", help='action')
 
     parser_sac = subparsers.add_parser('curve', parents=[common_args], help="Load the extensions and compute the Species Accumulation Curve.")
+    parser_sac.add_argument('csv_file', type=str, help='CSV file to write to')
 
     parser_cmp = subparsers.add_parser('compare', parents=[common_args], help="Compare extensions from a CSV file with the registry contents.")
     parser_cmp.add_argument('csv_file', type=str, help='CSV file to load')
@@ -118,8 +153,8 @@ if __name__ == "__main__":
             logging.getLogger().setLevel(logging.DEBUG)
 
     if args.action == 'curve':
-        compute_sac()
+        write_sac(args.input_file, args.csv_file)
     elif args.action == 'compare':
-        compare_csv(args.csv_file)
+        compare_csv(args.input_file, args.csv_file)
     elif args.action == "extensions":
-        write_extensions(args.json_file)
+        write_extensions(args.input_file, args.json_file)
