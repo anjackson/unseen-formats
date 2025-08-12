@@ -69,6 +69,8 @@ def compute_sac(ext_sets):
             "total_uniq_exts": len(all_extensions),
             "added_uniq_exts": total_added
         }
+        # Option to print uniques for a source:
+        # print(unique_ext)
         results.append(result)
 
     return results

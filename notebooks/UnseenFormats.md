@@ -82,7 +82,7 @@ x_fit, y_fit, a_opt, b_opt, y_lower, y_upper = generate_fit(df['total_exts'], df
 # Plot the original data
 fig, ax = plt.subplots(figsize=(10, 6))
 for i in range(len(df['source'])):
-    ax.scatter(df['total_exts'][i], df['total_uniq_exts'][i], label=df['source'][i], s=30)
+    ax.scatter(df['total_exts'][i], df['total_uniq_exts'][i], label=df['source'][i], s=20)
 
 # Plot the fitted curve
 plt.plot(x_fit, y_fit, 'r-', label=f'Fit: y = {a_opt:.2f}ln(x) + {b_opt:.2f}')

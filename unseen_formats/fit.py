@@ -67,7 +67,7 @@ def generate_fit_plot(x_data, y_data, labels, x_fit, y_fit, a_opt, b_opt, y_lowe
   # Plot the original data
   fig, ax = plt.subplots()
   for i in range(len(x_data)):
-    ax.scatter(x_data[i], y_data[i], label=labels[i], s=30)
+    ax.scatter(x_data[i], y_data[i], label=labels[i], s=20)
 
   # Set the limits
   ax.set_xlim([0, 50000])
@@ -82,7 +82,6 @@ def generate_fit_plot(x_data, y_data, labels, x_fit, y_fit, a_opt, b_opt, y_lowe
   # Final plot styling
   plt.xlabel('Total File Extensions', fontsize=10)
   plt.ylabel('Total Unique File Extensions', fontsize=10)
-  plt.title('Logarithmic Regression with Confidence Bounds', fontsize=12)
   plt.legend(fontsize=9)
   plt.grid(True, linestyle='--', alpha=0.6)
   #plt.show()
