@@ -57,8 +57,9 @@ matplotlib_inline.backend_inline.set_matplotlib_formats('svg')
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
 plt.rcParams['font.size'] = '14'
+figsize = (9, 6)
 
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=figsize)
 for i in range(num_points):
     b = ax.bar(df['source'][i],df['num_exts'][i])
     ax.bar_label(b, fontsize=11)
@@ -71,7 +72,7 @@ plt.show()
 ```
 
 ```{code-cell} ipython3
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=figsize)
 for i in range(num_points):
     x = df['num_exts'][i]
     max_x = max(df['num_exts'])
@@ -116,7 +117,7 @@ x_fit, y_fit, a_opt, b_opt, y_lower, y_upper = generate_fit(df['total_exts'], df
 
 
 # Plot the original data
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=figsize)
 for i in range(len(df['source'])):
     ax.scatter(df['total_exts'][i], df['total_uniq_exts'][i], label=df['source'][i], s=20)
 
@@ -141,7 +142,7 @@ plt.show()
 
 ```{code-cell} ipython3
 # Plot the original data
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=figsize)
 for i in range(len(df['source'])):
     ax.scatter(df['total_exts'][i], df['total_uniq_exts'][i], label=None, s=20)
 
