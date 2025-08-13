@@ -25,14 +25,14 @@ def generate_fit(x_data, y_data, min_x=None, max_x=None, steps=100):
 
   # Extract the optimal parameters
   a_opt, b_opt = popt
-  print(f"Optimal parameters: a = {a_opt:.3f}, b = {b_opt:.3f}")
+  #print(f"Optimal parameters: a = {a_opt:.3f}, b = {b_opt:.3f}")
 
   # Create a set of x-values for a smooth curve
   x_fit = np.linspace(min_x, max_x, steps)
 
   # Calculate the standard deviation of the parameters
-  perr = np.sqrt(np.diag(pcov))
-  print(perr)
+  # perr = np.sqrt(np.diag(pcov))
+  # print(perr)
 
   # To get the uncertainty of the fitted curve, we must propagate the error.
   # The variance of the function y = a*ln(x) + b is given by:
