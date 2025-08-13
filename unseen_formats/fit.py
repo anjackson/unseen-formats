@@ -80,7 +80,7 @@ def generate_fit_plot(x_data, y_data, labels, x_fit, y_fit, a_opt, b_opt, y_lowe
   plt.fill_between(x_fit, y_lower, y_upper, color='red', alpha=0.2, label='95% Confidence Interval')
 
   # Final plot styling
-  plt.xlabel('Total File Extensions', fontsize=10)
+  plt.xlabel('Total File Extensions Recorded', fontsize=10)
   plt.ylabel('Total Unique File Extensions', fontsize=10)
   plt.legend(fontsize=9)
   plt.grid(True, linestyle='--', alpha=0.6)

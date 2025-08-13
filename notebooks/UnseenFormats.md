@@ -38,6 +38,15 @@ Because we are reducing all the registry data down to file extensions, the assum
 To understand how distinct the holdings of each registry are, we can plot the percentage of unique entries versus the total number of entries.  If all registries were truly random samples of the totality of data formats, we would expect a broadly linear trend. In other words, we would expect larger registries to contain a larger percentage of unique entries.
 
 ```{code-cell} ipython3
+from unseen_formats.species import load_extensions, compute_sac
+import pandas as pd
+
+ext_sets = load_extensions('../data/extensions-new-2025-08-12.json')
+results = compute_sac(ext_sets)
+
+df = pd.DataFrame(results)
+num_points = len(df['source'])
+
 df
 ```
 
@@ -45,22 +54,49 @@ df
 %matplotlib inline
 import matplotlib_inline
 matplotlib_inline.backend_inline.set_matplotlib_formats('svg')
-
-from unseen_formats.species import load_extensions, compute_sac
-import pandas as pd
 import matplotlib.pyplot as plt
-
-ext_sets = load_extensions('../data/extensions-new-2025-08-12.json')
-results = compute_sac(ext_sets)
-
-df = pd.DataFrame(results)
+import matplotlib.patheffects as pe
+plt.rcParams['font.size'] = '14'
 
 fig, ax = plt.subplots(figsize=(10, 6))
-for i in range(len(df['source'])):
-    ax.scatter(df['num_exts'][i], df['num_uniq_exts'][i], label=df['source'][i], s=30)
+for i in range(num_points):
+    b = ax.bar(df['source'][i],df['num_exts'][i])
+    ax.bar_label(b, fontsize=11)
 
-plt.legend(fontsize=9)
-plt.grid(True, linestyle='--', alpha=0.6)
+ax.tick_params("x", rotation=45)
+plt.ylabel('Number of File Extensions')
+
+plt.savefig('unseen-registries.svg')
+plt.show()
+```
+
+```{code-cell} ipython3
+fig, ax = plt.subplots(figsize=(10, 6))
+for i in range(num_points):
+    x = df['num_exts'][i]
+    max_x = max(df['num_exts'])
+    y = df['percent_uniq_exts'][i]
+    max_y = max(df['percent_uniq_exts'])
+    txt = df['source'][i]
+    ax.scatter(x, y, label=txt, s=30, zorder=10)
+    if txt != 'lcfdd':
+        lr = 'left'
+        offset = (4,0)
+    else:
+        lr = 'right'
+        offset = (-4,0)
+    ax.annotate(txt, (x, y), xytext=offset, textcoords='offset points', 
+                ha=lr, fontsize=11, zorder=5,
+                path_effects=[pe.withStroke(linewidth=4, foreground="white")])
+    
+ax.set_xlim([0, 9000])
+ax.set_ylim([0, 50])
+
+#plt.legend(fontsize=9)
+plt.grid(True, linestyle='--', alpha=0.6, zorder=2)
+plt.xlabel('Number of File Extensions')
+plt.ylabel('Unique File Extensions')
+plt.savefig('unseen-uniqueness.svg')
 plt.show()
 ```
 
@@ -85,6 +121,31 @@ for i in range(len(df['source'])):
     ax.scatter(df['total_exts'][i], df['total_uniq_exts'][i], label=df['source'][i], s=20)
 
 # Plot the fitted curve
+#plt.plot(x_fit, y_fit, 'r-', label=None, alpha=0.1)
+
+# Plot the 95% confidence interval
+#plt.fill_between(x_fit, y_lower, y_upper, color='red', alpha=0.2, label='95% Confidence Interval')
+
+# Set the limits
+ax.set_xlim([0, 50000])
+ax.set_ylim([0, 14000])
+
+# Final plot styling
+plt.xlabel('Total File Extensions Recorded')
+plt.ylabel('Total Unique File Extensions')
+plt.legend(fontsize=11, loc='lower right')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.savefig('unseen-sac.svg')
+plt.show()
+```
+
+```{code-cell} ipython3
+# Plot the original data
+fig, ax = plt.subplots(figsize=(10, 6))
+for i in range(len(df['source'])):
+    ax.scatter(df['total_exts'][i], df['total_uniq_exts'][i], label=None, s=20)
+
+# Plot the fitted curve
 plt.plot(x_fit, y_fit, 'r-', label=f'Fit: y = {a_opt:.2f}ln(x) + {b_opt:.2f}')
 
 # Plot the 95% confidence interval
@@ -95,10 +156,11 @@ ax.set_xlim([0, 50000])
 ax.set_ylim([0, 14000])
 
 # Final plot styling
-plt.xlabel('Total File Extensions', fontsize=10)
-plt.ylabel('Total Unique File Extensions', fontsize=10)
-plt.legend(fontsize=9, loc='lower right')
+plt.xlabel('Total File Extensions Recorded')
+plt.ylabel('Total Unique File Extensions')
+plt.legend(fontsize=11, loc='lower right')
 plt.grid(True, linestyle='--', alpha=0.6)
+plt.savefig('unseen-sac-fit.svg')
 plt.show()
 ```
 
@@ -122,9 +184,6 @@ Further work is required to understand:
 - What other approaches might work, and what are the consequences.
 
 The work on [Using Collection Profiles](https://www.digipres.org/workbench/formats/profiles) aims to help explore some of these issues.
-
-
-
 
 ```{code-cell} ipython3
 
