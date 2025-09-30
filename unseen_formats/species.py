@@ -30,6 +30,15 @@ def load_extensions(input_file):
     if input_file.endswith('yml') or input_file.endswith('yaml'):
         extensions = load_extensions_yaml(input_file)
         return reindex_yaml_by_registry(extensions)
+    elif input_file.endswith('jsonl'):
+        # Assume this is the new (2025-09) `registries.jsonl' format:
+        ext_sets = {}
+        with open(input_file) as f:
+            for line in f:
+                reg = json.loads(line)
+                ext_sets[reg['id']] = set(reg['extensions'])
+        # And return:
+        return ext_sets
     else:
         with open(input_file) as f:
             ext_sets = json.load(f)
@@ -67,10 +76,9 @@ def compute_sac(ext_sets):
             "percent_uniq_exts": 100.0*unique_size/set_size,
             "total_exts": sample_total,
             "total_uniq_exts": len(all_extensions),
-            "added_uniq_exts": total_added
+            "added_uniq_exts": total_added,
+            "uniq_exts": list(unique_ext)
         }
-        # Option to print uniques for a source:
-        # print(unique_ext)
         results.append(result)
 
     return results

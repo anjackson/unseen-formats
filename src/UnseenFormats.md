@@ -33,16 +33,24 @@ Finally, we fit a curve to this data based on the expected form, and extrapolate
 
 Because we are reducing all the registry data down to file extensions, the assumptions and caveats outlined [here](https://www.digipres.org/workbench/formats/#file-extensions) should be kept in mind.  In particular, given that multiple distinct formats may use the same file extension, this analysis should be considered as establishing a conservative lower-bound on the number of formats.
 
-## Uniqueness
-
-To understand how distinct the holdings of each registry are, we can plot the percentage of unique entries versus the total number of entries.  If all registries were truly random samples of the totality of data formats, we would expect a broadly linear trend. In other words, we would expect larger registries to contain a larger percentage of unique entries.
-
 ```{code-cell} ipython3
 from unseen_formats.species import load_extensions, compute_sac
+from pathlib import Path
 import pandas as pd
+import csv
 
-ext_sets = load_extensions('../data/extensions-new-2025-08-12.json')
+input_file = './data/extensions-2025-08-12.json'
+#input_file = './data/extensions-new-2025-08-12.json'
+#input_file = './data/2025-09-28-registries.jsonl'
+ext_sets = load_extensions(input_file)
 results = compute_sac(ext_sets)
+
+output_csv = Path(input_file).with_suffix('.species.csv') 
+with open(output_csv, 'w') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=results[0].keys())
+    writer.writeheader()
+    for item in results:
+        writer.writerow(item)
 
 df = pd.DataFrame(results)
 num_points = len(df['source'])
@@ -50,7 +58,14 @@ num_points = len(df['source'])
 df
 ```
 
+## Overall Statistics
+
 ```{code-cell} ipython3
+---
+jupyter:
+  source_hidden: true
+  outputs_hidden: true
+---
 %matplotlib inline
 import matplotlib_inline
 matplotlib_inline.backend_inline.set_matplotlib_formats('svg')
@@ -67,11 +82,19 @@ for i in range(num_points):
 ax.tick_params("x", rotation=45)
 plt.ylabel('Number of File Extensions')
 
-plt.savefig('unseen-registries.svg')
+plt.savefig(Path(input_file).with_suffix('.unseen-registries.svg'))
 plt.show()
 ```
 
+## Uniqueness
+
+To understand how distinct the holdings of each registry are, we can plot the percentage of unique entries versus the total number of entries.  If all registries were truly random samples of the totality of data formats, we would expect a broadly linear trend. In other words, we would expect larger registries to contain a larger percentage of unique entries.
+
 ```{code-cell} ipython3
+---
+jupyter:
+  source_hidden: true
+---
 fig, ax = plt.subplots(figsize=figsize)
 for i in range(num_points):
     x = df['num_exts'][i]
@@ -97,7 +120,7 @@ ax.set_ylim([0, 50])
 plt.grid(True, linestyle='--', alpha=0.6, zorder=2)
 plt.xlabel('Number of File Extensions')
 plt.ylabel('Unique File Extensions')
-plt.savefig('unseen-uniqueness.svg')
+plt.savefig(Path(input_file).with_suffix('.unseen-uniqueness.svg'))
 plt.show()
 ```
 
@@ -111,6 +134,10 @@ It is notable that the `fdd` and `pronom` have relatively low percentages of uni
 The results of the final species accumulation curve are shown below.
 
 ```{code-cell} ipython3
+---
+jupyter:
+  source_hidden: true
+---
 from unseen_formats.fit import generate_fit
 
 x_fit, y_fit, a_opt, b_opt, y_lower, y_upper = generate_fit(df['total_exts'], df['total_uniq_exts'], 2000, 50000)
@@ -136,11 +163,15 @@ plt.xlabel('Total File Extensions Recorded')
 plt.ylabel('Total Unique File Extensions')
 plt.legend(fontsize=11, loc='lower right')
 plt.grid(True, linestyle='--', alpha=0.6)
-plt.savefig('unseen-sac.svg')
+plt.savefig(Path(input_file).with_suffix('.unseen-sac.svg'))
 plt.show()
 ```
 
 ```{code-cell} ipython3
+---
+jupyter:
+  source_hidden: true
+---
 # Plot the original data
 fig, ax = plt.subplots(figsize=figsize)
 for i in range(len(df['source'])):
@@ -161,7 +192,7 @@ plt.xlabel('Total File Extensions Recorded')
 plt.ylabel('Total Unique File Extensions')
 plt.legend(fontsize=11, loc='lower right')
 plt.grid(True, linestyle='--', alpha=0.6)
-plt.savefig('unseen-sac-fit.svg')
+plt.savefig(Path(input_file).with_suffix('.unseen-sac-fit.svg'))
 plt.show()
 ```
 
@@ -185,6 +216,10 @@ Further work is required to understand:
 - What other approaches might work, and what are the consequences.
 
 The work on [Using Collection Profiles](https://www.digipres.org/workbench/formats/profiles) aims to help explore some of these issues.
+
+```{code-cell} ipython3
+
+```
 
 ```{code-cell} ipython3
 
